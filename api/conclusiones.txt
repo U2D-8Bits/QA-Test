@@ -1,0 +1,50 @@
+Conclusiones y Hallazgos del Ejercicio de Pruebas de API (Demoblaze)
+
+Fecha de Ejecución: 21 de mayo de 2025
+Herramienta Utilizada: Cypress.io
+
+Objetivo del Ejercicio:
+El objetivo principal fue realizar pruebas a los servicios REST de registro (signup) y login de la plataforma Demoblaze (https://api.demoblaze.com/), identificando las entradas y capturando las salidas para diferentes escenarios.
+
+Hallazgos Principales:
+
+1.  Servicio de Registro (Signup - POST https://api.demoblaze.com/signup):
+    *   **Creación Exitosa de Nuevo Usuario:**
+        *   Entrada: `{ "username": "testuser<timestamp>", "password": "password<timestamp>" }`
+        *   Salida Esperada: Código de estado HTTP 200. El cuerpo de la respuesta es generalmente un string vacío (`""`) o un objeto JSON vacío (`{}`) en caso de éxito. No se devuelve un token o ID de usuario directamente en esta respuesta.
+        *   Observación: La API responde correctamente al crear un nuevo usuario. Se utilizó un timestamp para generar nombres de usuario únicos y evitar colisiones.
+    *   **Intento de Crear Usuario Ya Existente:**
+        *   Entrada: `{ "username": "testuser<timestamp_previo>", "password": "password<timestamp_previo>" }` (utilizando credenciales de un usuario ya registrado en la misma sesión de prueba).
+        *   Salida Esperada: Código de estado HTTP 200. El cuerpo de la respuesta es un objeto JSON con un mensaje de error: `{"errorMessage":"User already exist."}`.
+        *   Observación: La API maneja correctamente el caso de usuarios duplicados, devolviendo un mensaje de error específico. Es notable que devuelva un código 200 OK a pesar de ser una condición de error funcional, lo cual es una particularidad de esta API.
+
+2.  Servicio de Inicio de Sesión (Login - POST https://api.demoblaze.com/login):
+    *   **Usuario y Contraseña Correctos:**
+        *   Entrada: `{ "username": "testuser<timestamp>", "password": "password<timestamp>" }` (utilizando credenciales del usuario creado exitosamente).
+        *   Salida Esperada: Código de estado HTTP 200. El cuerpo de la respuesta es un objeto JSON que contiene un token de autenticación: `{"Auth_token":"<token_valor>"}`.
+        *   Observación: La API autentica correctamente al usuario y devuelve un token, como se esperaba.
+    *   **Usuario Incorrecto (No Existente):**
+        *   Entrada: `{ "username": "usuario_inexistente<timestamp>", "password": "cualquierpassword" }`.
+        *   Salida Esperada: Código de estado HTTP 200. El cuerpo de la respuesta es un objeto JSON con un mensaje de error: `{"errorMessage":"User does not exist."}`.
+        *   Observación: La API identifica correctamente que el usuario no existe y devuelve el mensaje de error apropiado. Nuevamente, se observa el uso del código 200 OK para una respuesta de error.
+    *   **Usuario Correcto, Contraseña Incorrecta:**
+        *   Entrada: `{ "username": "testuser<timestamp>", "password": "password_incorrecto" }`.
+        *   Salida Esperada: Código de estado HTTP 200. El cuerpo de la respuesta es un objeto JSON con un mensaje de error: `{"errorMessage":"Wrong password."}`.
+        *   Observación: La API valida la contraseña y devuelve un error específico cuando esta es incorrecta para un usuario existente. El código de estado 200 también se utiliza aquí.
+
+Conclusiones Generales:
+
+*   **Funcionalidad de los Endpoints:** Los endpoints de `signup` y `login` de la API de Demoblaze son funcionales y responden a las solicitudes según los escenarios probados.
+*   **Manejo de Errores:** La API proporciona mensajes de error descriptivos en el cuerpo de la respuesta para los casos de fallo (usuario ya existente, usuario no existe, contraseña incorrecta). Sin embargo, es una práctica no estándar devolver un código de estado HTTP 200 OK para estas condiciones de error. Generalmente, se esperarían códigos de la serie 4xx (por ejemplo, 400 Bad Request, 401 Unauthorized, 409 Conflict).
+*   **Idempotencia del Signup:** El endpoint de `signup` no es idempotente por diseño, ya que intentar crear el mismo usuario múltiples veces resulta en un error después del primer éxito.
+*   **Seguridad (Consideración Menor para este Ejercicio):** El uso de un token (`Auth_token`) para el login es una práctica estándar. No se evaluaron otros aspectos de seguridad como la fortaleza de la contraseña o la protección contra ataques de fuerza bruta en este ejercicio.
+*   **Cypress como Herramienta de Pruebas de API:** Cypress demostró ser una herramienta capaz para realizar pruebas de API, permitiendo enviar solicitudes HTTP, inspeccionar respuestas (estado, cuerpo) y realizar aserciones. Su sintaxis es clara y la integración con JavaScript facilita la manipulación de datos y la lógica de prueba.
+
+Recomendaciones (basadas en las observaciones):
+
+*   Para la API de Demoblaze: Considerar el uso de códigos de estado HTTP más semánticos para las respuestas de error (e.g., 409 para "User already exist", 400 o 401 para "User does not exist" o "Wrong password"). Esto alinearía la API con las mejores prácticas RESTful y facilitaría la integración para los clientes de la API.
+
+Siguientes Pasos (no parte del ejercicio actual):
+
+*   Crear un repositorio público en GitHub con todos los archivos generados.
+*   Empaquetar los archivos del proyecto en un formato .zip o .rar.
